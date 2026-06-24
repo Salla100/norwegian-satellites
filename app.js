@@ -119,7 +119,7 @@ const CATALOG = [
     operator: 'ORBIT NTNU',
     launched: '2022-05-25', status: 'dead',
     mission: 'Imaging / Education',
-    description: '1U CubeSat built by students at NTNU\'s ORBIT organisation. Carried a wide-angle camera and delivered over 118 space selfies during its 2-year mission. Final signal received September 2024. Deorbited naturally from ~480 km.',
+    description: '2U CubeSat built by students at NTNU\'s ORBIT organisation. Carried a wide-angle camera and delivered over 118 space selfies during its 2-year mission. Final signal received September 2024. Deorbited naturally from ~480 km.',
   },
 
   /* DEAD */
@@ -155,7 +155,7 @@ const CATALOG = [
     operator: 'ORBIT NTNU',
     launched: null, status: 'planned',
     mission: 'TBD',
-    description: 'Next-generation student satellite project from ORBIT NTNU. Named after the legendary polar exploration vessel Fram. Expected launch in the 2025–2026 timeframe.',
+    description: '1U CubeSat — next-generation student satellite from ORBIT NTNU. Named after the legendary polar exploration vessel Fram. Expected launch in the 2025–2026 timeframe.',
   },
   {
     id: 'hypso-3', name: 'HYPSO-3', noradId: null,
