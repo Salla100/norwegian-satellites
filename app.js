@@ -207,6 +207,7 @@ const state = {
   search: '',
   selectedId: null,
   globeMeshes: {},    // noradId → THREE.Mesh
+  overlayEls:  {},    // noradId → HTMLElement
 };
 
 /* ── TLE CACHE (localStorage, 24h TTL) ── */
@@ -450,11 +451,9 @@ function initGlobe() {
   window.addEventListener('mouseup',   () => isDragging = false);
   window.addEventListener('touchend',  () => isDragging = false);
 
-  /* Scroll zoom */
-  canvas.addEventListener('wheel', e => {
-    e.preventDefault();
-    camera.position.z = Math.max(3.5, Math.min(12, camera.position.z + e.deltaY * 0.01));
-  }, { passive: false });
+  /* Zoom buttons — no wheel capture so page scrolls normally */
+  document.getElementById('zoomIn').addEventListener('click',  () => { camera.position.z = Math.max(3.5, camera.position.z - 0.5); });
+  document.getElementById('zoomOut').addEventListener('click', () => { camera.position.z = Math.min(12,  camera.position.z + 0.5); });
 
   /* Resize */
   window.addEventListener('resize', () => {
@@ -465,37 +464,162 @@ function initGlobe() {
   });
 }
 
+/* ── SATELLITE SVG ICON ── */
+function satIconSVG(color) {
+  return `<svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="${color}">
+    <!-- body -->
+    <rect x="9.5" y="8.5" width="5" height="7" rx="1"/>
+    <!-- left solar panel -->
+    <rect x="1" y="10.5" width="7" height="3" rx="0.5" opacity="0.85"/>
+    <!-- right solar panel -->
+    <rect x="16" y="10.5" width="7" height="3" rx="0.5" opacity="0.85"/>
+    <!-- antenna -->
+    <line x1="12" y1="8.5" x2="12" y2="5.5" stroke="${color}" stroke-width="1" stroke-linecap="round"/>
+    <circle cx="12" cy="4.5" r="1.5"/>
+    <!-- dish -->
+    <path d="M9 19 Q12 16 15 19" stroke="${color}" stroke-width="1" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
 function buildSatelliteDots() {
-  /* Remove old */
+  /* Remove old 3D meshes */
   Object.values(state.globeMeshes).forEach(m => globeGroup.remove(m));
   state.globeMeshes = {};
 
-  const geo = new THREE.SphereGeometry(0.018, 8, 8);
+  /* Build invisible anchor meshes (for 3D→2D projection) */
+  const geo = new THREE.SphereGeometry(0.001, 4, 4);
   for (const sat of CATALOG) {
     if (!sat.noradId || sat.status === 'dead' || sat.status === 'planned') continue;
-    const color = catColor(sat);
-    const mat = new THREE.MeshBasicMaterial({ color });
+    // Keep material visible so Three.js updates matrixWorld; mesh itself is too small to see
+    const mat  = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.visible = false;
+    mesh.userData.hasPosition = false;
     globeGroup.add(mesh);
     state.globeMeshes[sat.noradId] = mesh;
   }
+
+  /* Build HTML overlay markers */
+  const overlay = document.getElementById('satOverlay');
+  overlay.innerHTML = '';
+  state.overlayEls = {};
+
+  for (const sat of CATALOG) {
+    if (!sat.noradId || sat.status === 'dead' || sat.status === 'planned') continue;
+    const color = catColor(sat);
+    const el = document.createElement('div');
+    el.className = 'sat-marker';
+    el.dataset.id = sat.id;
+    el.style.setProperty('--marker-color', color);
+    el.innerHTML = `
+      <div class="sat-icon">${satIconSVG(color)}</div>
+      <div class="sat-name-tag">${sat.name}</div>
+      <div class="sat-popup">
+        <div class="popup-name">${sat.name}</div>
+        <div class="popup-grid">
+          <div class="popup-item"><span class="popup-lbl">Lat</span><span class="popup-val" data-field="lat">—</span></div>
+          <div class="popup-item"><span class="popup-lbl">Lng</span><span class="popup-val" data-field="lng">—</span></div>
+          <div class="popup-item"><span class="popup-lbl">Alt</span><span class="popup-val" data-field="alt">—</span></div>
+          <div class="popup-item"><span class="popup-lbl">Vel</span><span class="popup-val" data-field="vel">—</span></div>
+        </div>
+        <div class="popup-orbit-line" id="orbit-${sat.id}">—</div>
+        <div class="popup-click-hint">Click for full details →</div>
+      </div>`;
+    el.addEventListener('click', () => openPanel(sat.id));
+    overlay.appendChild(el);
+    state.overlayEls[sat.noradId] = el;
+  }
+}
+
+/* Check if a world-space position is on the camera-facing hemisphere */
+function isFacingCamera(worldPos) {
+  const camNormal = camera.position.clone().normalize();
+  const satNormal = worldPos.clone().normalize();
+  return camNormal.dot(satNormal) > 0.05;
 }
 
 function updateGlobeDots() {
   for (const sat of CATALOG) {
+    if (!sat.noradId) continue;
     const mesh = state.globeMeshes[sat.noradId];
-    if (!mesh) continue;
-    const pos = state.positions[sat.noradId];
-    if (!pos) { mesh.visible = false; continue; }
-    const r   = altToRadius(pos.alt);
-    const v   = latLngToVec3(pos.lat, pos.lng, r);
-    mesh.position.copy(v);
-    mesh.visible = true;
+    const el   = state.overlayEls ? state.overlayEls[sat.noradId] : null;
+    if (!mesh && !el) continue;
 
-    /* Scale highlight for selected */
-    const scale = sat.id === state.selectedId ? 2.5 : 1;
-    mesh.scale.setScalar(scale);
+    const pos = state.positions[sat.noradId];
+    if (!pos) {
+      if (mesh) mesh.userData.hasPosition = false;
+      if (el)   el.style.display = 'none';
+      continue;
+    }
+
+    const r = altToRadius(pos.alt);
+    const v = latLngToVec3(pos.lat, pos.lng, r);
+
+    if (mesh) {
+      mesh.position.copy(v);
+      mesh.userData.hasPosition = true;
+    }
+
+    /* Update popup live values */
+    if (el) {
+      const latEl = el.querySelector('[data-field="lat"]');
+      const lngEl = el.querySelector('[data-field="lng"]');
+      const altEl = el.querySelector('[data-field="alt"]');
+      const velEl = el.querySelector('[data-field="vel"]');
+      if (latEl) latEl.textContent = pos.lat.toFixed(2) + '°';
+      if (lngEl) lngEl.textContent = pos.lng.toFixed(2) + '°';
+      if (altEl) altEl.textContent = Math.round(pos.alt) + ' km';
+      if (velEl) velEl.textContent = pos.vel ? pos.vel + ' km/s' : '—';
+
+      /* Orbital parameters from satrec (computed once) */
+      if (!el._orbitSet && state.satrecs[sat.noradId]) {
+        const sr = state.satrecs[sat.noradId];
+        const period  = ((2 * Math.PI) / sr.no).toFixed(0);
+        const incl    = (sr.inclo * 180 / Math.PI).toFixed(1);
+        const orbitEl = document.getElementById(`orbit-${sat.id}`);
+        if (orbitEl) orbitEl.textContent = `Incl ${incl}° · Period ${period} min`;
+        el._orbitSet = true;
+      }
+
+      /* Mark active/selected */
+      el.classList.toggle('active', sat.id === state.selectedId);
+    }
+  }
+}
+
+/* Called every animation frame to project 3D positions → 2D screen coords */
+function updateOverlayPositions() {
+  if (!state.overlayEls) return;
+  const wrap = document.getElementById('globeWrap');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const vec = new THREE.Vector3();
+
+  for (const sat of CATALOG) {
+    if (!sat.noradId) continue;
+    const el   = state.overlayEls[sat.noradId];
+    const mesh = state.globeMeshes[sat.noradId];
+    if (!el || !mesh || !mesh.userData.hasPosition) {
+      if (el) el.style.display = 'none';
+      continue;
+    }
+
+    /* Force matrixWorld update so projection is always current */
+    mesh.updateWorldMatrix(true, false);
+    mesh.getWorldPosition(vec);
+
+    /* Hide if on far side of globe */
+    if (!isFacingCamera(vec)) {
+      el.style.display = 'none';
+      continue;
+    }
+
+    /* Project to normalised device coordinates */
+    vec.project(camera);
+    const x = (vec.x  + 1) / 2 * W;
+    const y = (-vec.y + 1) / 2 * H;
+
+    el.style.display  = '';
+    el.style.left     = x + 'px';
+    el.style.top      = y + 'px';
   }
 }
 
@@ -504,6 +628,7 @@ function animateGlobe() {
   if (autoRotate) globeGroup.rotation.y += 0.0008;
   atmosphereMesh.position.copy(globeGroup.position);
   renderer.render(scene, camera);
+  updateOverlayPositions();
 }
 
 /* ── STARFIELD ── */
@@ -812,6 +937,10 @@ async function init() {
   renderCards();
   animateGlobe();
 
+  // Build overlay markers immediately — they'll show positions once TLEs load
+  buildSatelliteDots();
+  document.getElementById('globeLoading').classList.add('hidden');
+
   setStatus('loading', 'Fetching TLEs…');
 
   let fetchedCount = 0;
@@ -819,7 +948,6 @@ async function init() {
     const tles = await fetchTles();
     state.tles  = tles;
 
-    // Build satrecs
     for (const sat of CATALOG) {
       if (!sat.noradId || !tles[sat.noradId]) continue;
       try {
@@ -831,23 +959,22 @@ async function init() {
       } catch {}
     }
 
-    if (fetchedCount === 0) throw new Error('No valid satrecs');
-
-    propagateAll();
-    buildSatelliteDots();
-    updateGlobeDots();
-    renderCards();
-
-    document.getElementById('globeLoading').classList.add('hidden');
-    setStatus('live', `${fetchedCount} satellites live`);
-    startLiveLoop();
+    if (fetchedCount > 0) {
+      propagateAll();
+      updateGlobeDots();
+      renderCards();
+      setStatus('live', `${fetchedCount} satellites live`);
+      startLiveLoop();
+    } else {
+      setStatus('error', 'TLE fetch failed — positions unavailable');
+    }
 
   } catch (e) {
     console.error('TLE init failed', e);
-    document.getElementById('globeLoading').classList.add('hidden');
     setStatus('error', 'TLE fetch failed — positions unavailable');
-    renderCards();
   }
+
+  renderCards();
 }
 
 document.addEventListener('DOMContentLoaded', init);
