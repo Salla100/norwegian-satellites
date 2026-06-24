@@ -12,17 +12,17 @@ const CATALOG = [
     id: 'norsat-1', name: 'NorSat-1', noradId: 42826,
     category: 'government', orbit: 'LEO',
     operator: 'Space Norway / Norwegian Space Agency',
-    launched: '2017-07-14', status: 'active',
+    launched: '2017-07-14', status: 'dead',
     mission: 'AIS / VDES',
-    description: 'Microsatellite carrying a maritime AIS receiver and VHF Data Exchange System (VDES) payload. First satellite of the NorSat series, launched on a Rokot vehicle from Plesetsk.',
+    description: 'First of the NorSat microsatellite series, carrying an AIS receiver and VHF Data Exchange System (VDES) payload. Operated for over 8 years — well beyond its 5-year design life. Decommissioned circa 2025.',
   },
   {
     id: 'norsat-2', name: 'NorSat-2', noradId: 42827,
     category: 'government', orbit: 'LEO',
     operator: 'Space Norway / Norwegian Space Agency',
-    launched: '2017-07-14', status: 'active',
+    launched: '2017-07-14', status: 'dead',
     mission: 'AIS',
-    description: 'Twin to NorSat-1, providing additional coverage for maritime AIS signal reception. Contributes to Norway\'s ability to monitor ship traffic in Arctic and global waters.',
+    description: 'Twin to NorSat-1, providing overlapping AIS coverage for maritime domain awareness. Also exceeded its 5-year design life significantly. Decommissioned circa 2025.',
   },
   {
     id: 'norsat-3', name: 'NorSat-3', noradId: 54361,
@@ -36,9 +36,18 @@ const CATALOG = [
     id: 'norsat-td', name: 'NorSat-TD', noradId: 43694,
     category: 'government', orbit: 'LEO',
     operator: 'Space Norway / KSAT',
-    launched: '2018-11-19', status: 'active',
+    launched: '2018-11-19', status: 'dead',
     mission: 'Technology Demonstration',
-    description: 'Technology demonstrator for the NorSat series. Tests new components and communications payloads for future Norwegian government satellites.',
+    description: 'Technology demonstrator for the NorSat series. Sustained damage during intense solar storm activity in 2024 and was taken out of service. Operated for approximately 6 years.',
+  },
+
+  {
+    id: 'norsat-4', name: 'NorSat-4', noradId: 62702,
+    category: 'government', orbit: 'LEO',
+    operator: 'Space Norway / SFL Missions',
+    launched: '2025-01-14', status: 'active',
+    mission: 'AIS / Low-Light Imaging',
+    description: 'Latest NorSat spacecraft, launched on SpaceX Transporter-12. Carries a fifth-generation AIS receiver and a first-of-its-kind low-light camera to detect "dark ships" not broadcasting AIS. Built by SFL Missions.',
   },
 
   /* DEFENCE — FFI */
@@ -105,12 +114,12 @@ const CATALOG = [
 
   /* STUDENT — ORBIT NTNU */
   {
-    id: 'selfiesat', name: 'SelfieSat', noradId: 55098,
+    id: 'selfiesat', name: 'SelfieSat', noradId: 53951,
     category: 'student', orbit: 'LEO',
     operator: 'ORBIT NTNU',
-    launched: '2023-01-03', status: 'active',
+    launched: '2022-05-25', status: 'dead',
     mission: 'Imaging / Education',
-    description: '1U CubeSat built by students at NTNU\'s student satellite organisation ORBIT. Carries a wide-angle camera to capture images from orbit. Launched on SpaceX Transporter-6 as part of Norway\'s student space programme.',
+    description: '1U CubeSat built by students at NTNU\'s ORBIT organisation. Carried a wide-angle camera and delivered over 118 space selfies during its 2-year mission. Final signal received September 2024. Deorbited naturally from ~480 km.',
   },
 
   /* DEAD */
@@ -157,12 +166,12 @@ const CATALOG = [
     description: 'Third in NTNU\'s hyperspectral imaging series. Expected to carry advanced hyperspectral payloads with improved signal-to-noise ratio and onboard AI inference.',
   },
   {
-    id: 'norsat-4', name: 'NorSat-4', noradId: null,
-    category: 'government', orbit: 'LEO',
-    operator: 'Space Norway',
+    id: 'aissat-4', name: 'AISSat-4', noradId: null,
+    category: 'defence', orbit: 'LEO',
+    operator: 'Norwegian Defence Research Establishment (FFI) / SFL Missions',
     launched: null, status: 'planned',
-    mission: 'AIS / Earth Observation',
-    description: 'Next in the NorSat series planned by Space Norway. Expected to carry enhanced AIS capabilities alongside Earth observation payloads to support Norwegian maritime interests.',
+    mission: 'AIS Maritime Surveillance',
+    description: 'Fourth FFI maritime surveillance nanosatellite, under fast-turnaround development by SFL Missions Inc. (contract awarded 2025). Aims to plug the coverage gap left by the ageing AISSat constellation.',
   },
   {
     id: 'thor-8', name: 'Thor 8', noradId: null,
