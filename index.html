@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Norwegian Satellites — Live Orbital Tracker</title>
+  <meta name="description" content="Live orbital tracking of all Norwegian satellites — government, defence, commercial, academic and student spacecraft.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <!-- Back to svenamberg.com -->
+    <a href="https://svenamberg.com" class="nav-back">← svenamberg.com</a>
+    <div class="nav-center">
+      <span class="nav-flag">🇳🇴</span>
+      <span class="nav-title">Norwegian Satellites</span>
+    </div>
+    <div class="nav-tle-status" id="tleStatus">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Loading TLEs…</span>
+    </div>
+  </nav>
+
+  <!-- Hero + Globe -->
+  <section class="hero">
+    <canvas id="starfield"></canvas>
+    <div class="globe-wrap" id="globeWrap">
+      <canvas id="globeCanvas"></canvas>
+      <div class="globe-loading" id="globeLoading">
+        <div class="globe-spinner"></div>
+        <p>Fetching orbital data…</p>
+      </div>
+    </div>
+    <div class="hero-text">
+      <h1 class="hero-title">Norwegian Satellites</h1>
+      <p class="hero-sub">Live orbital positions updated every 2 seconds · TLE refreshed daily</p>
+    </div>
+    <!-- Category filter pills (also double as stats) -->
+    <div class="filter-row" id="filterRow">
+      <button class="pill active" data-filter="all">All <span class="pill-count" id="c-all">—</span></button>
+      <button class="pill cat-gov" data-filter="government">Government <span class="pill-count" id="c-gov">—</span></button>
+      <button class="pill cat-def" data-filter="defence">Defence <span class="pill-count" id="c-def">—</span></button>
+      <button class="pill cat-com" data-filter="commercial">Commercial <span class="pill-count" id="c-com">—</span></button>
+      <button class="pill cat-aca" data-filter="academic">Academic <span class="pill-count" id="c-aca">—</span></button>
+      <button class="pill cat-stu" data-filter="student">Student <span class="pill-count" id="c-stu">—</span></button>
+      <button class="pill cat-dead" data-filter="dead">Dead <span class="pill-count" id="c-dead">—</span></button>
+      <button class="pill cat-plan" data-filter="planned">Planned <span class="pill-count" id="c-plan">—</span></button>
+    </div>
+  </section>
+
+  <!-- Catalog -->
+  <section class="catalog" id="catalog">
+    <div class="catalog-header">
+      <h2 class="section-title">Satellite Catalog</h2>
+      <input type="text" class="search-box" id="searchBox" placeholder="Search by name, operator…">
+    </div>
+    <div class="sat-grid" id="satGrid">
+      <!-- injected by JS -->
+    </div>
+  </section>
+
+  <!-- Detail panel -->
+  <div class="panel-overlay" id="panelOverlay">
+    <aside class="detail-panel" id="detailPanel">
+      <button class="panel-close" id="panelClose" aria-label="Close">✕</button>
+      <div id="panelContent"></div>
+    </aside>
+  </div>
+
+  <footer class="site-footer">
+    <p>TLE orbital elements from <a href="https://celestrak.org" target="_blank" rel="noopener">CelesTrak</a> · Propagated with <a href="https://github.com/shashwatak/satellite-js" target="_blank" rel="noopener">satellite.js</a></p>
+    <p>Built by <a href="https://svenamberg.com">Sven Amberg</a> · <a href="https://svenamberg.com">svenamberg.com</a></p>
+  </footer>
+
+  <!-- Libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://unpkg.com/satellite.js@4.1.3/dist/satellite.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
